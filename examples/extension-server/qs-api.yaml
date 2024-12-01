@@ -93,4 +93,11 @@ spec:
         - path:
             type: PathPrefix
             value: /hello
-      
+      filters:
+      - type: ExtensionRef
+        extensionRef:
+          group: example.extensions.io
+          kind: API
+          name: example-api
+
+

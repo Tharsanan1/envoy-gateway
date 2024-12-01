@@ -137,6 +137,7 @@ func (s *Server) PostHTTPListenerModify(ctx context.Context, req *pb.PostHTTPLis
 	// Collect all of the required username/password combinations from the
 	// provided contexts that were attached to the gateway.
 	passwords := NewHtpasswd()
+	flag := false
 	for _, ext := range req.PostListenerContext.ExtensionResources {
 		var listenerContext v1alpha1.ListenerContextExample
 		s.log.Info("extension resource", slog.String("extension", string(ext.GetUnstructuredBytes())))
@@ -146,6 +147,12 @@ func (s *Server) PostHTTPListenerModify(ctx context.Context, req *pb.PostHTTPLis
 		}
 		s.log.Info("processing an extension context", slog.String("username", listenerContext.Spec.Username))
 		passwords.AddUser(listenerContext.Spec.Username, listenerContext.Spec.Password)
+		flag = true
+	}
+	if !flag {
+		return &pb.PostHTTPListenerModifyResponse{
+			Listener: req.Listener,
+		}, nil
 	}
 
 	// First, get the filter chains from the listener
