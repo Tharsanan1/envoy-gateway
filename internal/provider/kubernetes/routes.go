@@ -314,7 +314,10 @@ func (r *gatewayAPIReconciler) processHTTPRoutes(ctx context.Context, gatewayNam
 				var extGKs []schema.GroupKind
 				for _, gvk := range r.extGVKs {
 					extGKs = append(extGKs, gvk.GroupKind())
+					r.log.Info("gvk : " + gvk.GroupKind().String())
 				}
+				// print extGKs
+				
 				if err := gatewayapi.ValidateHTTPRouteFilter(&filter, extGKs...); err != nil {
 					r.log.Error(err, "bypassing filter rule hello", "index", i)
 					continue
