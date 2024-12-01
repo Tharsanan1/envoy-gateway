@@ -14,30 +14,28 @@ import (
 // +kubebuilder:subresource:status
 //
 // ListenerContext provides an example extension policy context resource.
-type ListenerContextExample struct {
+type API struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ListenerContextExampleSpec `json:"spec"`
+	Spec APISpec `json:"spec"`
 }
 
-type ListenerContextExampleSpec struct {
+type APISpec struct {
 	TargetRefs []gwapiv1a2.LocalPolicyTargetReferenceWithSectionName `json:"targetRefs"`
 
-	Username string `json:"username"`
-	Password string `json:"password"`
   Context string `json:"context"`
 }
 
 // +kubebuilder:object:root=true
 //
 // ListenerContextList contains a list of ListenerContext resources.
-type ListenerContextExampleList struct {
+type APIList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ListenerContextExample `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&ListenerContextExample{}, &ListenerContextExampleList{})
+	SchemeBuilder.Register(&API{}, &APIList{})
 }

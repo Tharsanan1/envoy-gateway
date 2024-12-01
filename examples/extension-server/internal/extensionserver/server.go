@@ -13,6 +13,8 @@ import (
 
 	pb "github.com/envoyproxy/gateway/proto/extension"
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	v32 "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
+	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	bav3 "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/basic_auth/v3"
 	hcm "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
@@ -34,6 +36,96 @@ func New(logger *slog.Logger) *Server {
 	}
 }
 
+func (s *Server) PostRouteModify(ctx context.Context, req *pb.PostRouteModifyRequest) (*pb.PostRouteModifyResponse, error) {
+	s.log.Info("postRouteModify callback was invoked")
+	contextPath := ""
+	for _, ext := range req.PostRouteContext.ExtensionResources {
+		// print the unstructered bytes as string 
+		s.log.Info("extension resource", slog.String("extension", string(ext.GetUnstructuredBytes())))
+
+		var api v1alpha1.API
+		s.log.Info("extension resource", slog.String("extension", string(ext.GetUnstructuredBytes())))
+		if err := json.Unmarshal(ext.GetUnstructuredBytes(), &api); err != nil {
+			s.log.Error("failed to unmarshal the extension", slog.String("error", err.Error()))
+			continue
+		} else {
+			contextPath = api.Spec.Context
+			s.log.Info(fmt.Sprintf("Extracted context path: %s from API: %s", contextPath, api.Name))
+			break
+		}
+	}
+	if contextPath == "" {
+		return &pb.PostRouteModifyResponse{
+			Route: req.Route,
+		}, nil
+	}
+	r := req.Route
+	if r.Match != nil {
+		switch r.Match.PathSpecifier.(type) {
+		case *routev3.RouteMatch_Prefix:
+			s.log.Info("Path specifier is a prefix")
+			r.Match.PathSpecifier = &routev3.RouteMatch_Prefix{
+				Prefix: fmt.Sprintf("/%s%s", contextPath, r.Match.PathSpecifier.(*routev3.RouteMatch_Prefix).Prefix),
+			}
+		case *routev3.RouteMatch_Path:
+			s.log.Info("Path specifier is a path")
+			r.Match.PathSpecifier = &routev3.RouteMatch_Path{
+				Path: fmt.Sprintf("/%s",contextPath),
+			}
+		case *routev3.RouteMatch_SafeRegex:
+			s.log.Info("Path specifier is a safe regex")
+			r.Match.PathSpecifier = &routev3.RouteMatch_SafeRegex{
+				SafeRegex: &v32.RegexMatcher{
+					Regex: fmt.Sprintf("/%s",contextPath),
+				},
+			}
+		case *routev3.RouteMatch_ConnectMatcher_:
+			s.log.Info("Path specifier is a connect matcher")
+			r.Match.PathSpecifier = &routev3.RouteMatch_ConnectMatcher_{
+				ConnectMatcher: &routev3.RouteMatch_ConnectMatcher{},
+			}
+		case *routev3.RouteMatch_PathSeparatedPrefix:
+			s.log.Info("Path specifier is a path separated prefix: "  + fmt.Sprintf("/%s/%s", contextPath, r.Match.PathSpecifier.(*routev3.RouteMatch_PathSeparatedPrefix).PathSeparatedPrefix))
+			r.Match.PathSpecifier = &routev3.RouteMatch_PathSeparatedPrefix{
+				PathSeparatedPrefix: fmt.Sprintf("/%s%s", contextPath, r.Match.PathSpecifier.(*routev3.RouteMatch_PathSeparatedPrefix).PathSeparatedPrefix),
+			}
+		case *routev3.RouteMatch_PathMatchPolicy:
+			s.log.Info("Path specifier is a path match policy")
+			r.Match.PathSpecifier = &routev3.RouteMatch_PathMatchPolicy{
+				PathMatchPolicy: &corev3.TypedExtensionConfig{
+					Name: "new-path-match-policy",
+				},
+			}
+		default:
+			s.log.Info("Path specifier is not a prefix")
+		}
+	}
+	return &pb.PostRouteModifyResponse{
+		Route: r,
+	}, nil
+}
+
+
+func (s *Server) PostVirtualHostModify(ctx context.Context, req *pb.PostVirtualHostModifyRequest) (*pb.PostVirtualHostModifyResponse, error) {
+	s.log.Info("PostVirtualHostModify callback was invoked")
+	
+	return &pb.PostVirtualHostModifyResponse{
+		VirtualHost: req.VirtualHost,
+	}, nil
+}
+
+func (s *Server) PostTranslateModify(ctx context.Context, req *pb.PostTranslateModifyRequest) (*pb.PostTranslateModifyResponse, error) {
+	s.log.Info("PostVirtualHostModify callback was invoked")
+	
+	return &pb.PostTranslateModifyResponse{
+		Clusters: req.Clusters,
+		Secrets: req.Secrets,
+	}, nil
+		
+}
+
+
+
 // PostHTTPListenerModify is called after Envoy Gateway is done generating a
 // Listener xDS configuration and before that configuration is passed on to
 // Envoy Proxy.
@@ -47,6 +139,7 @@ func (s *Server) PostHTTPListenerModify(ctx context.Context, req *pb.PostHTTPLis
 	passwords := NewHtpasswd()
 	for _, ext := range req.PostListenerContext.ExtensionResources {
 		var listenerContext v1alpha1.ListenerContextExample
+		s.log.Info("extension resource", slog.String("extension", string(ext.GetUnstructuredBytes())))
 		if err := json.Unmarshal(ext.GetUnstructuredBytes(), &listenerContext); err != nil {
 			s.log.Error("failed to unmarshal the extension", slog.String("error", err.Error()))
 			continue

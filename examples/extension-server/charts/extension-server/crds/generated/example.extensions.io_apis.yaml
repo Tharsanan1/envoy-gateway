@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: listenercontextexamples.example.extensions.io
+  name: apis.example.extensions.io
 spec:
   group: example.extensions.io
   names:
-    kind: ListenerContextExample
-    listKind: ListenerContextExampleList
-    plural: listenercontextexamples
-    singular: listenercontextexample
+    kind: API
+    listKind: APIList
+    plural: apis
+    singular: api
   scope: Namespaced
   versions:
   - name: v1alpha1
@@ -40,8 +40,6 @@ spec:
           spec:
             properties:
               context:
-                type: string
-              password:
                 type: string
               targetRefs:
                 items:
@@ -98,13 +96,9 @@ spec:
                   - name
                   type: object
                 type: array
-              username:
-                type: string
             required:
             - context
-            - password
             - targetRefs
-            - username
             type: object
         required:
         - spec

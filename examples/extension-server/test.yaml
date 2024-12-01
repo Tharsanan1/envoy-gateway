@@ -1,0 +1,26 @@
+    extensionManager:
+      # Envoy Gateway will watch these resource kinds and use them as extension policies
+      # which can be attached to Gateway resources.
+      policyResources:
+      - group: example.extensions.io
+        version: v1alpha1
+        kind: ListenerContextExample
+      - group: example.extensions.io
+        version: v1alpha1
+        kind: API
+      
+      hooks:
+        # The type of hooks that should be invoked
+        xdsTranslator:
+          post:
+          - HTTPListener
+          - VirtualHost
+          - Route
+          - Translation
+      service:
+        # The service that is hosting the extension server
+        fqdn: 
+          hostname: extension-server.envoy-gateway-system.svc.cluster.local
+          port: 5005
+
+

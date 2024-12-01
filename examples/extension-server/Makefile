@@ -11,7 +11,9 @@ build: generate manifests
 	CGO_ENABLED=0 go build -o bin/extension-server ./cmd/extension-server
 
 image: build
-	docker build -t extension-server:latest -f tools/docker/extension-server/Dockerfile .
+	docker build -t extension-server:latest1 -f tools/docker/extension-server/Dockerfile .
+	docker tag extension-server:latest1 tharsanan/extension-server:latest1
+	docker push tharsanan/extension-server:latest1
 
 manifests: $(tools/controller-gen)
 	$(tools/controller-gen) crd:allowDangerousTypes=true paths="./..." output:crd:artifacts:config=charts/extension-server/crds/generated
@@ -26,5 +28,17 @@ tools.clean: # Remove all tools
 clean: tools.clean
 	rm -fr bin
 
+settings: 
+	kubectl apply -f /home/tharsanan/Projects/gateway/examples/extension-server/settings.yaml
+	kubectl rollout restart deployment/envoy-gateway -n envoy-gateway-system
+
+apis:
+	kubectl apply -f /home/tharsanan/Projects/gateway/examples/extension-server/tapi.yaml
+
+delete-apis:
+	kubectl delete -f /home/tharsanan/Projects/gateway/examples/extension-server/tapi.yaml
+
+qs:
+	kubectl apply -f /home/tharsanan/Projects/gateway/examples/extension-server/qs.yaml
 
 .PHONY: build image manifests generate tools.clean clean

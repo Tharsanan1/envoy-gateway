@@ -69,9 +69,11 @@ func newGatewayAPIController(mgr manager.Manager, cfg *config.Server, su Updater
 	var extServerPoliciesGVKs []schema.GroupVersionKind
 	var extGVKs []schema.GroupVersionKind
 	if cfg.EnvoyGateway.ExtensionManager != nil {
+		cfg.Logger.Info("Extension manager is not nil ****8888")
 		for _, rsrc := range cfg.EnvoyGateway.ExtensionManager.Resources {
 			gvk := schema.GroupVersionKind(rsrc)
 			extGVKs = append(extGVKs, gvk)
+			cfg.Logger.Info("appended ****8888: " + gvk.String())
 		}
 		for _, rsrc := range cfg.EnvoyGateway.ExtensionManager.PolicyResources {
 			gvk := schema.GroupVersionKind(rsrc)
