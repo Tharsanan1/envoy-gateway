@@ -312,6 +312,7 @@ func (r *gatewayAPIReconciler) processHTTPRoutes(ctx context.Context, gatewayNam
 			for i := range rule.Filters {
 				filter := rule.Filters[i]
 				var extGKs []schema.GroupKind
+				r.log.Info("gvk : 111111111" )
 				for _, gvk := range r.extGVKs {
 					extGKs = append(extGKs, gvk.GroupKind())
 					r.log.Info("gvk : " + gvk.GroupKind().String())
