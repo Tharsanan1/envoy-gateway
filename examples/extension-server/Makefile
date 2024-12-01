@@ -80,6 +80,8 @@ clean-all:
 	-make uninstall-extension-server || true
 
 install-all:
+	minikube addons enable metallb
+	kubectl apply -f /home/tharsanan/Projects/gateway/examples/extension-server/metallb.yaml
 	make install-envoy
 	make install-extension-server
 	make settings

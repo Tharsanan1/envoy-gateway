@@ -26,7 +26,6 @@ type ListenerContextExampleSpec struct {
 
 	Username string `json:"username"`
 	Password string `json:"password"`
-  Context string `json:"context"`
 }
 
 // +kubebuilder:object:root=true

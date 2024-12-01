@@ -39,8 +39,6 @@ spec:
             type: object
           spec:
             properties:
-              context:
-                type: string
               password:
                 type: string
               targetRefs:
@@ -101,7 +99,6 @@ spec:
               username:
                 type: string
             required:
-            - context
             - password
             - targetRefs
             - username
